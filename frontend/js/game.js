@@ -1,3 +1,5 @@
+import { getAIMove } from './api.js'; // At the top of your file
+
 // Canvas setup
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -17,6 +19,7 @@ const player = {
 
 const bullets = [];
 const enemies = [];
+const enemyBullets = [];
 let score = 0;
 
 // Initialize enemies
@@ -61,8 +64,9 @@ function shoot() {
 }
 
 // Update game state
-function update() {
+async function update() {
   if (gameState !== 'PLAYING') return;
+
   // Move player
   if (player.isMovingLeft) player.x -= player.speed;
   if (player.isMovingRight) player.x += player.speed;
@@ -92,6 +96,53 @@ function update() {
         score += 10;
       }
     });
+  });
+
+  // --- AI Enemy Shooting ---
+  // Pick the first alive enemy as the "AI enemy"
+  const aiEnemy = enemies.find(e => e.isAlive);
+  if (aiEnemy) {
+    const aiGameState = {
+      player_x: player.x,
+      bullets: bullets.map(b => ({ x: b.x, y: b.y })),
+      enemies: enemies.filter(e => e.isAlive).map(e => ({ x: e.x, y: e.y }))
+    };
+    try {
+      const aiResponse = await getAIMove(aiGameState);
+      if (aiResponse.move.should_fire) {
+        // Only shoot if not already a bullet from this enemy on screen
+        const alreadyShot = enemyBullets.some(b => b.enemyId === aiEnemy.x + ',' + aiEnemy.y);
+        if (!alreadyShot) {
+          enemyBullets.push({
+            x: aiEnemy.x + aiEnemy.width / 2 - 3,
+            y: aiEnemy.y + aiEnemy.height,
+            width: 6,
+            height: 15,
+            speed: 7,
+            enemyId: aiEnemy.x + ',' + aiEnemy.y // To prevent spamming
+          });
+        }
+      }
+    } catch (e) {
+      // Optionally log AI errors
+    }
+  }
+
+  // Move enemy bullets
+  enemyBullets.forEach((bullet, idx) => {
+    bullet.y += bullet.speed;
+    if (bullet.y > canvas.height) enemyBullets.splice(idx, 1);
+    // Check collision with player
+    if (
+      bullet.x < player.x + player.width &&
+      bullet.x + bullet.width > player.x &&
+      bullet.y < player.y + player.height &&
+      bullet.y + bullet.height > player.y
+    ) {
+      // Handle player hit (e.g., end game or reduce life)
+      gameState = 'MENU'; // Example: go back to menu
+      enemyBullets.splice(idx, 1);
+    }
   });
 }
 
@@ -135,6 +186,12 @@ function draw() {
     }
   });
 
+  // Draw enemy bullets
+  ctx.fillStyle = "cyan";
+  enemyBullets.forEach(bullet => {
+    ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+  });
+
   // Draw score
   ctx.fillStyle = "white";
   ctx.font = "20px Arial";
@@ -142,8 +199,8 @@ function draw() {
 }
 
 // Game loop
-function gameLoop() {
-  update();
+async function gameLoop() {
+  await update();
   draw();
   requestAnimationFrame(gameLoop);
 }
