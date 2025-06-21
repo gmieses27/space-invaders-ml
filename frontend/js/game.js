@@ -3,6 +3,8 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 // Game state
+let gameState = 'MENU'; // <-- Add this here
+
 const player = {
   x: canvas.width / 2 - 25,
   y: canvas.height - 60,
@@ -34,6 +36,9 @@ function initEnemies() {
 
 // Input handling
 document.addEventListener("keydown", (e) => {
+  if (gameState === 'MENU' && e.key === " ") {
+    gameState = 'PLAYING';
+  }
   if (e.key === "ArrowLeft") player.isMovingLeft = true;
   if (e.key === "ArrowRight") player.isMovingRight = true;
   if (e.key === " ") shoot(); // Spacebar to shoot
@@ -57,6 +62,7 @@ function shoot() {
 
 // Update game state
 function update() {
+  if (gameState !== 'PLAYING') return;
   // Move player
   if (player.isMovingLeft) player.x -= player.speed;
   if (player.isMovingRight) player.x += player.speed;
@@ -89,8 +95,24 @@ function update() {
   });
 }
 
+// Draw menu
+function drawMenu() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "white";
+  ctx.font = "48px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("SPACE INVADERS", canvas.width / 2, 150);
+  ctx.font = "28px Arial";
+  ctx.fillText("Press SPACE to start", canvas.width / 2, 250);
+}
+
 // Draw everything
 function draw() {
+  if (gameState === 'MENU') {
+    drawMenu();
+    return;
+  }
   // Clear canvas
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -116,7 +138,7 @@ function draw() {
   // Draw score
   ctx.fillStyle = "white";
   ctx.font = "20px Arial";
-  ctx.fillText(`Score: ${score}`, 10, 30);
+  ctx.fillText(`Score: ${score}`, 60, 25);
 }
 
 // Game loop
