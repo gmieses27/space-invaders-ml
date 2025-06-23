@@ -16,6 +16,9 @@ const enemies = [];
 const enemyBullets = [];
 let score = 0;
 
+// Add this at the top of your file:
+let gameTime = 0;
+
 // Initialize enemies
 function initEnemies() {
     enemies.length = 0;
@@ -62,6 +65,8 @@ function shoot() {
 
 // Game loop
 function update() {
+    gameTime += 1;
+
     // Move player based on key states
     if (leftPressed) player.x -= player.speed;
     if (rightPressed) player.x += player.speed;
@@ -75,25 +80,23 @@ function update() {
         if (bullet.y < 0) bullets.splice(index, 1);
     });
 
-    // Move enemies randomly and shoot
-    enemies.forEach(enemy => {
+    // Galaga-style enemy movement and shooting
+    enemies.forEach((enemy, idx) => {
         if (!enemy.isAlive) return;
 
-        // Randomly change direction
-        if (Math.random() < 0.02) {
-            enemy.direction *= -1;
-        }
-        // Move enemy
-        enemy.x += enemy.direction * 2;
-        // Keep in bounds and bounce
-        if (enemy.x < 0) {
-            enemy.x = 0;
-            enemy.direction = 1;
-        }
-        if (enemy.x > canvas.width - enemy.width) {
-            enemy.x = canvas.width - enemy.width;
-            enemy.direction = -1;
-        }
+        // Calculate row and col for phase offset
+        const row = Math.floor(idx / 8);
+        const col = idx % 8;
+
+        // Sine wave horizontal movement
+        const baseX = col * 70 + 30;
+        const amplitude = 40 + row * 10; // Different amplitude per row
+        const frequency = 0.02 + row * 0.005; // Different frequency per row
+        enemy.x = baseX + Math.sin(gameTime * frequency + row) * amplitude;
+
+        // Optional: vertical bobbing
+        const baseY = row * 50 + 30;
+        enemy.y = baseY + Math.sin(gameTime * 0.03 + col) * 8;
 
         // Randomly shoot
         if (Math.random() < 0.01) {
