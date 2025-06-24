@@ -1,13 +1,15 @@
+import { updateEnemies } from './enemy.js';
+import { loadWave } from './waves.js';
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Game state
 const player = {
     x: canvas.width / 2 - 25,
     y: canvas.height - 60,
     width: 50,
     height: 20,
-    speed: 8,
+    speed: 5,
     color: '#0f0'
 };
 
@@ -16,41 +18,35 @@ const enemies = [];
 const enemyBullets = [];
 let score = 0;
 
-// Add this at the top of your file:
 let gameTime = 0;
+let currentWave = 0;
 
-// Initialize enemies
 function initEnemies() {
     enemies.length = 0;
     bullets.length = 0;
-    enemyBullets.length = 0; // <-- Add this line
-    for (let row = 0; row < 4; row++) {
-        for (let col = 0; col < 8; col++) {
-            enemies.push({
-                x: col * 70 + 30,
-                y: row * 50 + 30,
-                width: 40,
-                height: 30,
-                isAlive: true,
-                direction: Math.random() < 0.5 ? -1 : 1 // -1: left, 1: right
-            });
-        }
-    }
+    enemyBullets.length = 0;
+    const newEnemies = loadWave(currentWave);
+    newEnemies.forEach(e => enemies.push(e));
 }
 
-// Track key states
 let leftPressed = false;
 let rightPressed = false;
+let upPressed = false;
+let downPressed = false;
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft') leftPressed = true;
     if (e.key === 'ArrowRight') rightPressed = true;
+    if (e.key === 'ArrowUp') upPressed = true;
+    if (e.key === 'ArrowDown') downPressed = true;
     if (e.key === ' ') shoot();
 });
 
 document.addEventListener('keyup', (e) => {
     if (e.key === 'ArrowLeft') leftPressed = false;
     if (e.key === 'ArrowRight') rightPressed = false;
+    if (e.key === 'ArrowUp') upPressed = false;
+    if (e.key === 'ArrowDown') downPressed = false;
 });
 
 function shoot() {
@@ -63,74 +59,47 @@ function shoot() {
     });
 }
 
-// Game loop
 function update() {
     gameTime += 1;
 
-    // Move player based on key states
     if (leftPressed) player.x -= player.speed;
     if (rightPressed) player.x += player.speed;
+    if (upPressed) player.y -= player.speed;
+    if (downPressed) player.y += player.speed;
 
-    // Player bounds
     player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+    player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
 
-    // Move bullets
     bullets.forEach((bullet, index) => {
         bullet.y -= bullet.speed;
         if (bullet.y < 0) bullets.splice(index, 1);
     });
 
-    // Galaga-style enemy movement and shooting
-    enemies.forEach((enemy, idx) => {
-        if (!enemy.isAlive) return;
+    updateEnemies(enemies, enemyBullets, gameTime, canvas);
 
-        // Calculate row and col for phase offset
-        const row = Math.floor(idx / 8);
-        const col = idx % 8;
-
-        // Sine wave horizontal movement
-        const baseX = col * 70 + 30;
-        const amplitude = 40 + row * 10; // Different amplitude per row
-        const frequency = 0.02 + row * 0.005; // Different frequency per row
-        enemy.x = baseX + Math.sin(gameTime * frequency + row) * amplitude;
-
-        // Optional: vertical bobbing
-        const baseY = row * 50 + 30;
-        enemy.y = baseY + Math.sin(gameTime * 0.03 + col) * 8;
-
-        // Randomly shoot
-        if (Math.random() < 0.01) {
-            enemyBullets.push({
-                x: enemy.x + enemy.width / 2 - 3,
-                y: enemy.y + enemy.height,
-                width: 6,
-                height: 15,
-                speed: 5
-            });
-        }
-    });
-
-    // Move enemy bullets
     enemyBullets.forEach((bullet, index) => {
         bullet.y += bullet.speed;
         if (bullet.y > canvas.height) enemyBullets.splice(index, 1);
-        // Check collision with player
+
         if (
             bullet.x < player.x + player.width &&
             bullet.x + bullet.width > player.x &&
             bullet.y < player.y + player.height &&
             bullet.y + bullet.height > player.y
         ) {
-            // Player hit: reset game
             alert("Game Over! Final Score: " + score);
             initEnemies();
             score = 0;
             player.x = canvas.width / 2 - 25;
             player.y = canvas.height - 60;
+
+            leftPressed = false;
+            rightPressed = false;
+            upPressed = false;
+            downPressed = false;
         }
     });
 
-    // Check collisions
     bullets.forEach((bullet, bIndex) => {
         enemies.forEach((enemy, eIndex) => {
             if (enemy.isAlive &&
@@ -145,22 +114,24 @@ function update() {
             }
         });
     });
+
+    if (enemies.every(e => !e.isAlive)) {
+        currentWave++;
+        initEnemies();
+    }
 }
 
 function draw() {
-    // Clear screen
+
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw player
     ctx.fillStyle = player.color;
     ctx.fillRect(player.x, player.y, player.width, player.height);
 
-    // Draw bullets
     ctx.fillStyle = '#ff0';
     bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
 
-    // Draw enemies
     ctx.fillStyle = '#f00';
     enemies.forEach(enemy => {
         if (enemy.isAlive) {
@@ -168,11 +139,9 @@ function draw() {
         }
     });
 
-    // Draw enemy bullets
     ctx.fillStyle = '#0ff';
     enemyBullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
 
-    // Draw score
     ctx.fillStyle = '#fff';
     ctx.font = '24px Arial';
     ctx.fillText(`Score: ${score}`, 10, 30);
@@ -184,6 +153,5 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Start game
 initEnemies();
 gameLoop();
