@@ -21,7 +21,7 @@ export function updateEnemies(enemies, enemyBullets, gameTime, canvas) {
                 y: enemy.y + enemy.height,
                 width: 6,      
                 height: 15,    
-                speed: 4       
+                speed: 3
             });
         }
     });
