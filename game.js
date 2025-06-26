@@ -78,8 +78,15 @@ function update() {
     updateEnemies(enemies, enemyBullets, gameTime, canvas);
 
     enemyBullets.forEach((bullet, index) => {
-        bullet.y += bullet.speed;
-        if (bullet.y > canvas.height) enemyBullets.splice(index, 1);
+        // Sniper bullets use speedX/speedY, normal use speed
+        if (bullet.type === 'sniper') {
+            bullet.x += bullet.speedX;
+            bullet.y += bullet.speedY;
+        } else {
+            bullet.y += bullet.speed;
+        }
+        if (bullet.y > canvas.height || bullet.x < 0 || bullet.x > canvas.width)
+            enemyBullets.splice(index, 1);
 
         if (
             bullet.x < player.x + player.width &&
@@ -88,15 +95,16 @@ function update() {
             bullet.y + bullet.height > player.y
         ) {
             alert("Game Over! Final Score: " + score);
+            currentWave = 1; // Reset wave to 0 on death
             initEnemies();
             score = 0;
             player.x = canvas.width / 2 - 25;
             player.y = canvas.height - 60;
-
             leftPressed = false;
             rightPressed = false;
             upPressed = false;
             downPressed = false;
+            return; // This stops further update logic this frame!
         }
     });
 
@@ -122,7 +130,6 @@ function update() {
 }
 
 function draw() {
-
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -132,9 +139,13 @@ function draw() {
     ctx.fillStyle = '#ff0';
     bullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
 
-    ctx.fillStyle = '#f00';
+    // Draw enemies with color by type
     enemies.forEach(enemy => {
         if (enemy.isAlive) {
+            if (enemy.type === 'galaga') ctx.fillStyle = '#f00';      // Red
+            else if (enemy.type === 'sine') ctx.fillStyle = '#39f';   // Blue
+            else if (enemy.type === 'sniper') ctx.fillStyle = '#ff0'; // Yellow
+            else ctx.fillStyle = '#fff';                              // Default/unknown
             ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
         }
     });
