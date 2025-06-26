@@ -4,7 +4,7 @@ export const waves = [
     () => {
         const enemies = [];
         for (let row = 0; row < 5; row++) { // 5 rows
-            for (let col = 0; col < 1; col++) { // 10 columns
+            for (let col = 0; col < 10; col++) { // 10 columns
                 enemies.push({
                     x: col * 50 + 30, // tighter spacing for more enemies
                     y: row * 40 + 30,

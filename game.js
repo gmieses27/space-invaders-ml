@@ -59,6 +59,7 @@ function shoot() {
     });
 }
 
+
 function update() {
     gameTime += 1;
 
@@ -95,8 +96,7 @@ function update() {
             bullet.y + bullet.height > player.y
         ) {
             alert("Game Over! Final Score: " + score);
-            currentWave = 1; // Reset wave to 0 on death
-            initEnemies();
+            initEnemies(); // Just restart the current wave
             score = 0;
             player.x = canvas.width / 2 - 25;
             player.y = canvas.height - 60;
@@ -104,7 +104,7 @@ function update() {
             rightPressed = false;
             upPressed = false;
             downPressed = false;
-            return; // This stops further update logic this frame!
+            return;
         }
     });
 
@@ -145,7 +145,7 @@ function draw() {
             if (enemy.type === 'galaga') ctx.fillStyle = '#f00';      // Red
             else if (enemy.type === 'sine') ctx.fillStyle = '#39f';   // Blue
             else if (enemy.type === 'sniper') ctx.fillStyle = '#ff0'; // Yellow
-            else ctx.fillStyle = '#fff';                              // Default/unknown
+            else ctx.fillStyle = '#0ff';                              // Cyan for unknown types
             ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
         }
     });
