@@ -154,7 +154,7 @@ function draw() {
     enemyBullets.forEach(b => ctx.fillRect(b.x, b.y, b.width, b.height));
 
     ctx.fillStyle = '#fff';
-    ctx.font = '24px Arial';
+    ctx.font = '24px tahoma';
     ctx.fillText(`Score: ${score}`, 10, 30);
 }
 
