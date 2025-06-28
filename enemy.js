@@ -55,7 +55,6 @@ export function updateEnemies(enemies, enemyBullets, gameTime, canvas, player) {
             }
         } else if (enemy.type === 'sniper') {
             // Sniper: stays mostly still, fires directly at player but less often
-            // (optional: add a little horizontal bobbing)
             enemy.x += Math.sin(gameTime * 0.03 + idx) * 1;
 
             if (Math.random() < 0.004 && player) {
@@ -72,6 +71,56 @@ export function updateEnemies(enemies, enemyBullets, gameTime, canvas, player) {
                     speedX: dx / mag * speed,
                     speedY: dy / mag * speed,
                     type: 'sniper'
+                });
+            }
+        } else if (enemy.type === 'zigzag') {
+            // Zigzag enemies: move fast in a zigzag pattern
+            enemy.x += Math.sin(gameTime * 0.2 + enemy.phase) * enemy.speed;
+            enemy.y += Math.cos(gameTime * 0.05 + enemy.phase) * 1.5;
+
+            // Zigzag enemies shoot rarely but fast bullets
+            if (Math.random() < 0.005) {
+                enemyBullets.push({
+                    x: enemy.x + enemy.width / 2 - 3,
+                    y: enemy.y + enemy.height,
+                    width: 6,
+                    height: 15,
+                    speed: 8,
+                    type: 'normal'
+                });
+            }
+        } else if (enemy.type === 'boss') {
+            // Boss: stays in place, shoots bursts
+            if (Math.floor(gameTime) % 120 === 0) { // Every 2 seconds
+                for (let angle = -0.5; angle <= 0.5; angle += 0.25) {
+                    enemyBullets.push({
+                        x: enemy.x + enemy.width / 2 - 3,
+                        y: enemy.y + enemy.height,
+                        width: 8,
+                        height: 18,
+                        speedX: Math.sin(angle) * 4,
+                        speedY: Math.cos(angle) * 6,
+                        type: 'boss'
+                    });
+                }
+            }
+        } else if (enemy.type === 'minion') {
+            // Minions: orbit around the boss
+            const boss = enemies.find(e => e.type === 'boss' && e.isAlive);
+            if (boss) {
+                enemy.orbitAngle += enemy.orbitSpeed;
+                enemy.x = boss.x + boss.width / 2 + Math.cos(enemy.orbitAngle) * enemy.orbitRadius - enemy.width / 2;
+                enemy.y = boss.y + boss.height / 2 + Math.sin(enemy.orbitAngle) * enemy.orbitRadius - enemy.height / 2;
+            }
+            // Minions shoot occasionally
+            if (Math.random() < 0.01) {
+                enemyBullets.push({
+                    x: enemy.x + enemy.width / 2 - 3,
+                    y: enemy.y + enemy.height,
+                    width: 6,
+                    height: 15,
+                    speed: 4,
+                    type: 'normal'
                 });
             }
         }

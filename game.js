@@ -116,9 +116,17 @@ function update() {
                 bullet.y < enemy.y + enemy.height &&
                 bullet.y + bullet.height > enemy.y
             ) {
-                enemy.isAlive = false;
+                if (enemy.type === 'sniper') {
+                    enemy.health = (enemy.health || 2) - 1;
+                    if (enemy.health <= 0) {
+                        enemy.isAlive = false;
+                        score += 10;
+                    }
+                } else {
+                    enemy.isAlive = false;
+                    score += 10;
+                }
                 bullets.splice(bIndex, 1);
-                score += 10;
             }
         });
     });
@@ -145,6 +153,9 @@ function draw() {
             if (enemy.type === 'galaga') ctx.fillStyle = '#f00';      // Red
             else if (enemy.type === 'sine') ctx.fillStyle = '#39f';   // Blue
             else if (enemy.type === 'sniper') ctx.fillStyle = '#ff0'; // Yellow
+            else if (enemy.type === 'zigzag') ctx.fillStyle = '#0f0'; // Green
+            else if (enemy.type === 'boss') ctx.fillStyle = '#fff';   // White
+            else if (enemy.type === 'minion') ctx.fillStyle = '#f0f'; // Magenta
             else ctx.fillStyle = '#0ff';                              // Cyan for unknown types
             ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
         }
